@@ -5,6 +5,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 import pandas as pd
+import os
+from datetime import datetime
 
 data = []
 
@@ -26,11 +28,14 @@ def process_element(x):
         return driver.back()
     
     try:
-        # Get the text content of the mail element
+        # Get the text content of the mail element and company name
         mail = wait.until(EC.visibility_of_element_located((By.XPATH, '//span[@class="spoiler-email font-bold underline cursor-pointer"]')))
+        company = wait.until(EC.visibility_of_element_located((By.XPATH, '//h2[@class="text-lg font-bold text-gray-800"]')))
+        company_name = company.text
         mail_text = mail.text
-        print(mail_text)
-        data.append(mail_text)
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(company_name, mail_text, current_time)
+        data.append((company_name, mail_text, current_time))
     except Exception as e:
         return 
     
@@ -70,7 +75,7 @@ website = 'https://empregomais.com/'
 
 # Open the website
 driver.get(website)
-wait = WebDriverWait(driver, 1)
+wait = WebDriverWait(driver, 1)  # Increased wait time to 10 seconds
 
 # Iterate over values of x
 while True:
@@ -87,10 +92,20 @@ while True:
 # Close the WebDriver
 driver.quit()
 
-# Create a DataFrame and remove duplicates
-df = pd.DataFrame({'email': data})
-df = df.drop_duplicates()
+# Create a DataFrame from the collected data
+df_new = pd.DataFrame(data, columns=['Email', 'timestamp'])
 
-# Export DataFrame to CSV file
-df.to_csv('output.csv', index=False)
-print("DataFrame has been exported to 'output.csv'")
+# Check if 'output.csv' exists and read it if it does
+if os.path.exists('output.csv'):
+    df_existing = pd.read_csv('output.csv')
+    # Concatenate the new data with the existing data
+    df_combined = pd.concat([df_existing, df_new]).drop_duplicates(subset=['Email'])
+else:
+    df_combined = df_new.drop_duplicates(subset=['Email'])
+
+# Sort DataFrame by date column in descending order
+df_combined.sort_values(by='timestamp', ascending = False, inplace = True)
+
+# Export the combined DataFrame to CSV file
+df_combined.to_csv('output.csv', index=False)
+print("DataFrame has been appended to 'output.csv'")
