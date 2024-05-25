@@ -18,7 +18,7 @@ def process_element(x):
         oferta_link.click()
         driver.refresh()
     except Exception as e:
-        return
+        return 
     
     try:
         # Click on the email_click element
@@ -31,27 +31,29 @@ def process_element(x):
         # Get the text content of the mail element and company name
         mail = wait.until(EC.visibility_of_element_located((By.XPATH, '//span[@class="spoiler-email font-bold underline cursor-pointer"]')))
         company = wait.until(EC.visibility_of_element_located((By.XPATH, '//h2[@class="text-lg font-bold text-gray-800"]')))
+        pub_date = wait.until(EC.visibility_of_element_located((By.XPATH, '//span[@class="text-sm text-gray-600"]')))
         company_name = company.text
         mail_text = mail.text
+        pub_date_text = pub_date.text
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print(company_name, mail_text, current_time)
-        data.append((company_name, mail_text, current_time))
+        print(pub_date_text, company_name, mail_text, current_time)
+        data.append((pub_date_text, company_name, mail_text, current_time))
     except Exception as e:
-        return 
+        return driver.back()
     
     try:
         # Click on the go_back element
         driver.back()
         driver.refresh()
     except Exception as e:
-        return
+        return print('go_back error')
     
     try:
         # Click on the go_back element
         go_back = wait.until(EC.visibility_of_element_located((By.XPATH, '/html/body/div[1]/section/div/main/div/div[1]/a')))
         go_back.click()
     except: 
-        None
+        return
 
 # Specify the path to the ChromeDriver executable
 chrome_driver_path = 'chromedriver.exe'
@@ -93,11 +95,11 @@ while True:
 driver.quit()
 
 # Create a DataFrame from the collected data
-df_new = pd.DataFrame(data, columns=['Email', 'timestamp'])
+df_new = pd.DataFrame(data, columns=['Pub_date','Company','Email', 'timestamp'])
 
 # Check if 'output.csv' exists and read it if it does
-if os.path.exists('output.csv'):
-    df_existing = pd.read_csv('output.csv')
+if os.path.exists('empregomais.csv'):
+    df_existing = pd.read_csv('empregomais.csv')
     # Concatenate the new data with the existing data
     df_combined = pd.concat([df_existing, df_new]).drop_duplicates(subset=['Email'])
 else:
@@ -107,5 +109,5 @@ else:
 df_combined.sort_values(by='timestamp', ascending = False, inplace = True)
 
 # Export the combined DataFrame to CSV file
-df_combined.to_csv('output.csv', index=False)
-print("DataFrame has been appended to 'output.csv'")
+df_combined.to_csv('empregomais.csv', index=False)
+print("DataFrame has been appended to 'empergomais.csv'")
