@@ -110,4 +110,4 @@ df_combined.sort_values(by='timestamp', ascending = False, inplace = True)
 
 # Export the combined DataFrame to CSV file
 df_combined.to_csv('empregomais.csv', index=False)
-print("DataFrame has been appended to 'empergomais.csv'")
+print("DataFrame has been appended to 'empregomais.csv'")
