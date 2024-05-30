@@ -98,8 +98,8 @@ driver.quit()
 df_new = pd.DataFrame(data, columns=['Pub_date','Company','Email', 'timestamp'])
 
 # Check if 'output.csv' exists and read it if it does
-if os.path.exists('empregomais.csv'):
-    df_existing = pd.read_csv('empregomais.csv')
+if os.path.exists('output.csv'):
+    df_existing = pd.read_csv('output.csv')
     # Concatenate the new data with the existing data
     df_combined = pd.concat([df_existing, df_new]).drop_duplicates(subset=['Email'])
 else:
@@ -109,5 +109,5 @@ else:
 df_combined.sort_values(by='timestamp', ascending = False, inplace = True)
 
 # Export the combined DataFrame to CSV file
-df_combined.to_csv('empregomais.csv', index=False)
-print("DataFrame has been appended to 'empregomais.csv'")
+df_combined.to_csv('output.csv', index=False)
+print("DataFrame has been appended to 'output.csv'")
