@@ -13,7 +13,7 @@ h11==0.14.0
 idna==3.6
 importlib-metadata==6.7.0
 ipykernel==6.16.2
-ipython==7.34.0
+ipython==8.10.0
 jedi==0.19.1
 jupyter-client==7.4.9
 jupyter-core==4.12.0
