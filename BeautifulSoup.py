@@ -8,6 +8,3 @@ emails = soup.find_all(text=email_id)
 
 for email in emails:
     print(email)
-    
-
-
