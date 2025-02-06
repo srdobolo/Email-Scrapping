@@ -11,7 +11,7 @@ from ftfy import fix_text
 
 # Configurar opções do Chrome
 chrome_options = Options()
-chrome_options.add_argument("--headless")  # Executar sem abrir o navegador
+# chrome_options.add_argument("--headless")  # Executar sem abrir o navegador
 chrome_options.add_argument("--disable-gpu")
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
@@ -33,46 +33,50 @@ html_source = driver.page_source.encode("utf-8").decode("utf-8")
 soup = BeautifulSoup(html_source, "xml")  # XML para melhor parsing do RSS
 
 # Extrair todas as ofertas de emprego
-items = soup.find_all("item")
+items = soup.find_all("item")[:10]  # Limitar a 10 para debug
 
-for item in items:
-    title = fix_text(item.find("title").text.strip())
-    dc_creator = fix_text(item.find("dc:creator").text.strip()) if item.find("dc:creator") else "Sem autor"
-    link = fix_text(item.find("link").text.strip())
-    description = fix_text(item.find("description").text.strip()) if item.find("description") else "Sem descrição"
-    pub_date = fix_text(item.find("pubDate").text.strip()) if item.find("pubDate") else "Sem data"
-    guid = fix_text(item.find("guid").text.strip()) if item.find("guid") else "Sem GUID"
-
-    # Acessar página da oferta de emprego
-    driver.get(link)
-    time.sleep(3)  # Aguarde o carregamento da página
-
+for index, item in enumerate(items):
+    print(f"Processando oferta {index + 1}/{len(items)}...")
     try:
-        # Esperar até que o ícone do envelope esteja visível e clicar
-        envelope_icon = WebDriverWait(driver, 5).until(
-            EC.element_to_be_clickable((By.CLASS_NAME, "fa-envelope"))
-        )
-        envelope_icon.click()
-        
-        # Esperar o e-mail aparecer e extrair o link "mailto"
-        email_element = WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.XPATH, "//a[starts-with(@href, 'mailto:')]")
-        ))
-        email = email_element.get_attribute("href").replace("mailto:", "").split("?")[0]
-    except:
-        email = "Não encontrado"
-    
-    # Print para debug
-    print("Job Title:", title)
-    print("Author:", dc_creator)
-    print("Job Link:", link)
-    print("Description:", description)
-    print("Post Date:", pub_date)
-    print("GUID:", guid)
-    print("Email:", email)
-    print("-" * 50)
+        link = fix_text(item.find("link").text.strip())
+        driver.get(link)
+        time.sleep(5)  # Aguardar mais tempo para carregamento
+
+        try:
+            # Lidar com a cookie wall
+            cookie_button = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.ID, "CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll"))
+            )
+            driver.execute_script("arguments[0].scrollIntoView();", cookie_button)
+            cookie_button.click()
+            time.sleep(2)  # Esperar para garantir que o botão de cookies seja clicado
+
+            # Fechar o pop-up
+            close_popup_button = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.CLASS_NAME, "sp-prompt-close"))
+            )
+            driver.execute_script("arguments[0].scrollIntoView();", close_popup_button)
+            close_popup_button.click()
+            time.sleep(2)  # Esperar para garantir que o pop-up seja fechado
+
+            # Localizar e clicar no botão "Mostrar Email"
+            show_email_button = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.CLASS_NAME, "job-mail"))
+            )
+            driver.execute_script("arguments[0].scrollIntoView();", show_email_button)
+            show_email_button.click()
+            time.sleep(3)  # Esperar para garantir que o email carregue
+
+            # Extrair email
+            email_element = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, "//a[starts-with(@href, 'mailto:')]"))
+            )
+            email = email_element.get_attribute("href").replace("mailto:", "").split("?")[0]
+            print(f"Email encontrado: {email}")
+        except Exception as e:
+            print(f"Erro ao obter e-mail: {str(e)}")
+    except Exception as e:
+        print(f"Erro ao processar oferta {index + 1}: {str(e)}")
 
 # Fechar o navegador
 driver.quit()
-
-print("Scraping concluído!")
